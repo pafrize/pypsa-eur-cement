@@ -1,0 +1,47 @@
+def add_cement_capacities_installed_before_baseyear(n, baseyear, gruouping_years, costs):
+    """
+    Parameters
+    ----------
+    n : pypsa.Network
+    grouping_years :
+        intervals to group existing capacities
+    costs :
+        to read lifetime to estimate YearDecomissioning
+    baseyear : int
+    """
+    logger.debug(f"Adding cement capacities installed before {baseyear}")
+
+    existing_cement = pd.read_csv(
+        snakemake.input.existing_cement_distribution, header=[0, 1], index_col=0
+    )
+    # get number of years of each interval
+    _years = (
+        valid_grouping_years.diff()
+        .shift(-1)
+        .fillna(baseyear - valid_grouping_years.iloc[-1])
+    )
+    # Installation is assumed to be linear for the past
+    ratios = _years / _years.sum()
+
+    for ratio, grouping_year in zip(ratios, valid_grouping_years):
+
+        n.madd(
+            "Link",
+            nodes,
+            suffix=f" {name} cemment-{grouping_year}",
+            bus1=nodes_elec,
+            bus2=nodes_ht_heat,
+            bus3=nodes + " " + name + " cement",
+            bus4="co2 atmosphere"
+            carrier=f"{name} cement",
+            efficiency=efficiency_elec,
+            efficiency1=efficiency_heat,
+            efficiency3=efficiency co2,
+            capital_cost=costs.at[costs_name, "efficiency"]
+            * costs.at[costs_name, "fixed"],
+            p_nom=existing_cement.loc[nodes, (name, f"cement")]
+            * ratio
+            / costs.at[costs_name, "efficiency"],
+            build_year=int(grouping_year),
+            lifetime=costs.at[costs_name, "lifetime"],
+        )
