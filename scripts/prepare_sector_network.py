@@ -212,6 +212,34 @@ def define_spatial(nodes, options):
     spatial.geothermal_heat.nodes = ["EU enhanced geothermal systems"]
     spatial.geothermal_heat.locations = ["EU"]
 
+    # cement
+    spatial.cement = SimpleNamespace()
+    spatial.cement.plants = nodes + " cement plants"
+    spatial.cement.nodes = nodes + " cement"
+    spatial.cement.locations = nodes
+
+    spatial.co2_cement = SimpleNamespace()
+    spatial.co2_cement.emssions = nodes + " co2 cement emissions"
+    spatial.co2_cement.nodes = nodes + " co2 cement"
+    spatial.co2_cement.locations = nodes
+
+    # ht_heat
+    spatial.ht_heat = SimpleNamespace()
+    spatial.ht_heat.plants = nodes + " ht_heat plants"
+    spatial.ht_heat.nodes = nodes + " ht_heat"
+    spatial.ht_heat.locations = nodes
+
+    spatial.ht_heat_oxy = SimpleNamespace()
+    spatial.ht_heat_oxy.plants = nodes + " ht_heat oxy plants"
+    spatial.ht_heat_oxy.nodes = nodes + " ht_heat_oxy"
+    spatial.ht_heat_oxy.locations = nodes
+
+    # waste
+    spatial.waste = SimpleNamespace()
+    spatial.waste.plants = nodes + " waste plants"
+    spatial.waste.nodes = nodes + " waste"
+    spatial.waste.locations = nodes
+
     return spatial
 
 
@@ -2915,24 +2943,24 @@ def add_industry(n, costs):
     else:
         link_names = spatial.biomass.industry_cc
 
-    n.madd(
-        "Link",
-        link_names,
-        bus0=spatial.biomass.nodes,
-        bus1=spatial.biomass.industry,
-        bus2="co2 atmosphere",
-        bus3=spatial.co2.nodes,
-        carrier="solid biomass for industry CC",
-        p_nom_extendable=True,
-        capital_cost=costs.at["cement capture", "fixed"]
-        * costs.at["solid biomass", "CO2 intensity"],
-        efficiency=0.9,  # TODO: make config option
-        efficiency2=-costs.at["solid biomass", "CO2 intensity"]
-        * costs.at["cement capture", "capture_rate"],
-        efficiency3=costs.at["solid biomass", "CO2 intensity"]
-        * costs.at["cement capture", "capture_rate"],
-        lifetime=costs.at["cement capture", "lifetime"],
-    )
+    # n.madd(
+    #     "Link",
+    #     link_names,
+    #     bus0=spatial.biomass.nodes,
+    #     bus1=spatial.biomass.industry,
+    #     bus2="co2 atmosphere",
+    #     bus3=spatial.co2.nodes,
+    #     carrier="solid biomass for industry CC",
+    #     p_nom_extendable=True,
+    #     capital_cost=costs.at["cement capture", "fixed"]
+    #     * costs.at["solid biomass", "CO2 intensity"],
+    #     efficiency=0.9,  # TODO: make config option
+    #     efficiency2=-costs.at["solid biomass", "CO2 intensity"]
+    #     * costs.at["cement capture", "capture_rate"],
+    #     efficiency3=costs.at["solid biomass", "CO2 intensity"]
+    #     * costs.at["cement capture", "capture_rate"],
+    #     lifetime=costs.at["cement capture", "lifetime"],
+    # )
 
     n.madd(
         "Bus",
@@ -2969,24 +2997,24 @@ def add_industry(n, costs):
         efficiency2=costs.at["gas", "CO2 intensity"],
     )
 
-    n.madd(
-        "Link",
-        spatial.gas.industry_cc,
-        bus0=spatial.gas.nodes,
-        bus1=spatial.gas.industry,
-        bus2="co2 atmosphere",
-        bus3=spatial.co2.nodes,
-        carrier="gas for industry CC",
-        p_nom_extendable=True,
-        capital_cost=costs.at["cement capture", "fixed"]
-        * costs.at["gas", "CO2 intensity"],
-        efficiency=0.9,
-        efficiency2=costs.at["gas", "CO2 intensity"]
-        * (1 - costs.at["cement capture", "capture_rate"]),
-        efficiency3=costs.at["gas", "CO2 intensity"]
-        * costs.at["cement capture", "capture_rate"],
-        lifetime=costs.at["cement capture", "lifetime"],
-    )
+    # n.madd(
+    #     "Link",
+    #     spatial.gas.industry_cc,
+    #     bus0=spatial.gas.nodes,
+    #     bus1=spatial.gas.industry,
+    #     bus2="co2 atmosphere",
+    #     bus3=spatial.co2.nodes,
+    #     carrier="gas for industry CC",
+    #     p_nom_extendable=True,
+    #     capital_cost=costs.at["cement capture", "fixed"]
+    #     * costs.at["gas", "CO2 intensity"],
+    #     efficiency=0.9,
+    #     efficiency2=costs.at["gas", "CO2 intensity"]
+    #     * (1 - costs.at["cement capture", "capture_rate"]),
+    #     efficiency3=costs.at["gas", "CO2 intensity"]
+    #     * costs.at["cement capture", "capture_rate"],
+    #     lifetime=costs.at["cement capture", "lifetime"],
+    # )
 
     n.madd(
         "Load",
@@ -3575,20 +3603,20 @@ def add_industry(n, costs):
     )
 
     # assume enough local waste heat for CC
-    n.madd(
-        "Link",
-        spatial.co2.locations,
-        suffix=" process emissions CC",
-        bus0=spatial.co2.process_emissions,
-        bus1="co2 atmosphere",
-        bus2=spatial.co2.nodes,
-        carrier="process emissions CC",
-        p_nom_extendable=True,
-        capital_cost=costs.at["cement capture", "fixed"],
-        efficiency=1 - costs.at["cement capture", "capture_rate"],
-        efficiency2=costs.at["cement capture", "capture_rate"],
-        lifetime=costs.at["cement capture", "lifetime"],
-    )
+    # n.madd(
+    #     "Link",
+    #     spatial.co2.locations,
+    #     suffix=" process emissions CC",
+    #     bus0=spatial.co2.process_emissions,
+    #     bus1="co2 atmosphere",
+    #     bus2=spatial.co2.nodes,
+    #     carrier="process emissions CC",
+    #     p_nom_extendable=True,
+    #     capital_cost=costs.at["cement capture", "fixed"],
+    #     efficiency=1 - costs.at["cement capture", "capture_rate"],
+    #     efficiency2=costs.at["cement capture", "capture_rate"],
+    #     lifetime=costs.at["cement capture", "lifetime"],
+    # )
 
     if options.get("ammonia"):
         if options["ammonia"] == "regional":
@@ -3649,6 +3677,275 @@ def add_industry(n, costs):
             p_nom_extendable=True,
             efficiency2=costs.at["coal", "CO2 intensity"],
         )
+
+
+def add_cement(n, costs, p_load):
+
+    n.madd(
+        "Bus",
+        spatial.cement.nodes,
+        location=spatial.cement.locations,
+        carrier="cement",
+        unit="t cement",
+    )
+    n.madd(
+        "Bus",
+        spatial.co2_cement.nodes,
+        location=spatial.cement.locations,
+        carrier="co2",
+        unit = "t co2",
+    )
+    n.madd(
+        "Load",
+        spatial.cement.nodes,
+        suffix=" cement demand",
+        bus=spatial.cement.nodes,
+        carrier="cement",
+        p_set=p_load,
+    )
+
+    add_ht_heat_busses(n, costs)
+
+    n.madd(
+        "Link",
+        spatial.cement.plants,
+        bus0=spatial.cement.nodes,
+        bus2=spatial.nodes,
+        bus1=spatial.ht_heat.nodes,
+        bus3=spatial.co2_cement.nodes,
+        efficiency=1, # costs.at["cement", "electric efficiency"],
+        efficiency2=1, # costs.at["cement", "heating efficiency"],
+        efficiency3=1, # costs.at["cement", "CO2 intensity"],
+        lifetime=20, # costs.at["cement", "lifetime"],
+        capital_cost=20, # costs.at["cement", "capex"],
+        p_nom_extendable=True,
+    )
+    n.madd(
+        "Link",
+        spatial.co2_cement.nodes,
+        bus0=spatial.co2_cement.nodes,
+        bus1="co2 atmosphere",
+        carrier="co2",
+        efficiency=1,
+        lifetime=60,
+        capital_cost=0,
+        p_nom_extendeble=True,
+    )
+    n.madd(
+        "Link",
+        spatial.co2_cement.nodes + " cc",
+        bus0=spatial.co2_cement.nodes,
+        bus1="co2 atmosphere",
+        bus2=spatial.co2.nodes,
+        bus3=spatial.nodes,
+        bus4=spatial.ht_heat.nodes,
+        efficiency=1, # 1 - costs.at["cement cc", "CO2 capture rate"],
+        efficiency2=1, # costs.at["cement cc", "CO2 capture rate"],
+        efficiency3=1, # costs.at["cement cc", "electric efficiency"],
+        efficiency4=1, # costs.at["cement cc", "heating efficiency"],
+        lifetime=20, # costs.at["cement cc", "lifetime"],
+        capital_cost=20, # costs.at["cement cc", "capex"],
+        p_nom_extendable=True,
+    )
+    n.madd(
+        "Link",
+        spatial.cement.plants + " oxy",
+        bus0=spatial.cement.nodes,
+        bus2=spatial.nodes,
+        bus1=spatial.ht_heat_oxy.nodes,
+        bus3=spatial.co2.nodes,
+        bus4="co2 atmosphere",
+        efficiency=1, #costs.at["cement oxy", "electric efficiency"],
+        efficiency2=1, # costs.at["cement oxy", "heating efficiency"],
+        efficiency3=1, # costs.at["cement", "CO2 intensity"] * costs.at["cement oxy", "CO2 capture rate"],
+        efficiency4=1, # costs.at["cement", "CO2 intensity"] * (1 - costs.at["cement oxy", "CO2 capture rate"]),
+        capital_cost=1, # costs.at["cement oxy", "capex"],
+        p_nom_extendable=True,
+    )
+
+
+def add_ht_heat_busses(n, costs):
+
+    # Adding High Temperetaure Heat buses
+
+    n.madd(
+        "Bus",
+        spatial.ht_heat.nodes,
+        location=spatial.ht_heat.locations,
+        carrier="HT heat",
+        unit="MWh",
+    )
+    n.madd(
+        "Bus",
+        spatial.ht_heat_oxy.nodes,
+        location=spatial.ht_heat_oxy.locations,
+        carrier="HT heat oxy",
+        unit="MWh",
+    )
+
+    # Add Waste Bus
+
+    n.madd(
+        "Bus",
+        spatial.waste.nodes,
+        location=spatial.waste.locations,
+        carrier="waste",
+        unit="MWh",
+    )
+    n.madd(
+        "Generator",
+        spatial.waste.nodes,
+        bus=spatial.waste.nodes,
+        p_nom_extendable=True,
+        p_nom_max=2000, # costs.at["waste", "p_nom_max"],
+        carrier="waste",
+        marginal_cost=0.1, # costs.at["waste", "opex"],
+    )
+
+    # High Temperatur Heat via oil
+
+    n.madd(
+        "Link",
+        spatial.ht_heat.nodes + " oil",
+        bus0=spatial.oil.nodes,
+        bus1=spatial.ht_heat.nodes,
+        bus2=spatial.co2_cement.nodes,
+        carrier="oil",
+        efficiency=1,
+        efficiency2=4, #costs.at["oil", "CO2 intensity"],
+        lifetime=60,
+    )
+    n.madd(
+        "Link",
+        spatial.ht_heat_oxy.nodes + " oil",
+        bus0=spatial.oil.nodes,
+        bus1=spatial.ht_heat_oxy.nodes,
+        bus2=spatial.co2.nodes,
+        bus3="co2 atmosphere",
+        efficiency=1,
+        efficiency2=2, # costs.at["oil", "CO2 intensity"] * costs.at["cement oxy", "CO2 capture rate"],
+        efficiency3=2, #  costs.at["oil", "CO2 intensity"] * (1 - costs.at["cement oxy", "CO2 capture rate"])
+        lifetime=60,
+    )
+
+    # High Temperature Heat via gas
+
+    n.madd(
+        "Link",
+        spatial.ht_heat.nodes + " gas",
+        bus0=spatial.gas.nodes,
+        bus1=spatial.ht_heat.nodes,
+        bus2=spatial.co2_cement.nodes,
+        efficiency=1,
+        efficiency2=2, # costs.at["gas", "CO2 intensity"],
+        lifetime=60,
+    )  
+    n.madd(
+        "Link",
+        spatial.ht_heat_oxy.nodes + " gas",
+        bus0=spatial.gas.nodes,
+        bus1=spatial.ht_heat_oxy.nodes,
+        bus2=spatial.co2.nodes,
+        bus3="co2 atmosphere",
+        efficiency=1,
+        efficiency2=2, # costs.at["gas", "CO2 intensity"] * costs.at["cement oxy", "CO2 capture rate"],
+        efficiency3=2, # costs.at["gas", "CO2 intensity"] * (1 - costs.at["cement oxy", "CO2 capture rate"])
+        lifetime=60,
+    )
+
+    # High Temperature Heat via Cole
+
+    n.madd(
+        "Link",
+        spatial.ht_heat.nodes + " coal",
+        bus0=spatial.coal.nodes,
+        bus1=spatial.ht_heat.nodes,
+        bus2=spatial.co2_cement.nodes,
+        efficiency=1,
+        efficiency2=2, # costs.at["coal", "CO2 intensity"],
+        lifetime=60,
+    )   
+    n.madd(
+        "Link",
+        spatial.ht_heat_oxy.nodes + " coal",
+        bus0=spatial.coal.nodes,
+        bus1=spatial.ht_heat_oxy.nodes,
+        bus2=spatial.co2.nodes,
+        bus3="co2 atmosphere",
+        efficiency=1,
+        efficiency2=2, # costs.at["coal", "CO2 intensity"] * costs.at["cement oxy", "CO2 capture rate"],
+        efficiency3=2, # costs.at["coal", "CO2 intensity"] * (1 - costs.at["cement oxy", "CO2 capture rate"])
+        lifetime=60,
+    )
+
+    # High Temperature Heat via Waste
+
+    n.madd(
+        "Link",
+        spatial.ht_heat.nodes + " waste",
+        bus0=spatial.waste.nodes,
+        bus1=spatial.ht_heat.nodes,
+        bus2=spatial.co2_cement.nodes,
+        efficiency=1,
+        efficiency2=2, # costs.at["waste", "CO2 intensity"],
+        lifetime=60,
+    ) 
+    n.madd(
+        "Link",
+        spatial.ht_heat_oxy.nodes + " waste",
+        bus0=spatial.waste.nodes,
+        bus1=spatial.ht_heat_oxy.nodes,
+        bus2=spatial.co2.nodes,
+        bus3="co2 atmosphere",
+        efficiency=1,
+        efficiency2=2, # costs.at["waste", "CO2 intensity"] * costs.at["cement oxy", "CO2 capture rate"],
+        efficiency3=2, # costs.at["waste", "CO2 intensity"] * (1 - costs.at["cement oxy", "CO2 capture rate"])
+        lifetime=60,
+    )
+
+    # High Temperature Heat via hydrogen
+
+    n.madd(
+        "Link",
+        spatial.ht_heat.nodes + " h2",
+        bus0=spatial.h2.nodes,
+        bus1=spatial.ht_heat.nodes,
+        efficiency=1,
+        lifetime=60,
+    )  
+    n.madd(
+        "Link",
+        spatial.ht_heat_oxy.nodes + " h2",
+        bus0=spatial.h2.nodes,
+        bus1=spatial.ht_heat_oxy.nodes,
+        efficiency=1,
+        lifetime=60,
+    )
+
+    # High Temperature Heate via Biomass
+
+    n.madd(
+        "Link",
+        spatial.ht_heat.nodes + " biomass",
+        bus0=spatial.biomass.nodes,
+        bus1=spatial.ht_heat.nodes,
+        bus2=spatial.co2_cement.nodes,
+        efficiency=1,
+        efficiency2=2, # costs.at["biomass", "CO2 intensity"],
+        lifetime=60,
+    ) 
+    n.madd(
+        "Link",
+        spatial.ht_heat_oxy.nodes + " biomass",
+        bus0=spatial.biomass.nodes,
+        bus1=spatial.ht_heat_oxy.nodes,
+        bus2=spatial.co2.nodes,
+        bus3="co2 atmosphere",
+        efficiency=1,
+        efficiency2=2, # costs.at["biomass", "CO2 intensity"] * costs.at["cement oxy", "CO2 capture rate"],
+        efficiency3=2, # costs.at["biomass", "CO2 intensity"] * (1 - costs.at["cement oxy", "CO2 capture rate"])
+        lifetime=60,
+    )
 
 
 def add_waste_heat(n):
@@ -4337,6 +4634,9 @@ if __name__ == "__main__":
 
     if options["industry"]:
         add_industry(n, costs)
+
+    if options["cement"]:
+        add_cement(n, costs, 20000) # snakemake.input.cement_load)
 
     if options["heating"]:
         add_waste_heat(n)

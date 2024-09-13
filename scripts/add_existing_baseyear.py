@@ -614,6 +614,72 @@ def add_heating_capacities_installed_before_baseyear(
             )
 
 
+def add_cement_capacities_installed_before_baseyear(n, baseyear, grouping_years, costs, default_lifetime):
+    """
+    Parameters
+    ----------
+    n : pypsa.Network
+    grouping_years :
+        intervals to group existing capacities
+    costs :
+        to read lifetime to estimate YearDecomissioning
+    baseyear : int
+    """
+    logger.debug(f"Adding cement capacities installed before {baseyear}")
+
+    # existing_cement = pd.read_csv(
+    #     snakemake.input.existing_cement_distribution, header=[0, 1], index_col=0
+    # )
+
+    valid_grouping_years = pd.Series(
+        [
+            int(grouping_year)
+            for grouping_year in grouping_years
+            if int(grouping_year) + default_lifetime > int(baseyear)
+            and int(grouping_year) < int(baseyear)
+        ]
+    )
+    # get number of years of each interval
+    _years = (
+        valid_grouping_years.diff()
+        .shift(-1)
+        .fillna(baseyear - valid_grouping_years.iloc[-1])
+    )
+    # Installation is assumed to be linear for the past
+    ratios = _years / _years.sum()
+
+    nodes = pd.Index(
+        n.buses.location[n.buses.index.str.contains(f"cement")]
+    )
+
+    nodes_elec = nodes
+    nodes_ht_heat = nodes
+
+    for ratio, grouping_year in zip(ratios, valid_grouping_years):
+
+        n.madd(
+            "Link",
+            nodes,
+            suffix=f" {nodes} cemment-{grouping_year}",
+            bus1=nodes_elec,
+            bus2=nodes_ht_heat,
+            bus3=f"{nodes} cement",
+            bus4="co2 atmosphere",
+            carrier=f"cement",
+            efficiency=1, # costs.at["cement", "electric efficiency"],
+            efficiency2=1, # costs.at["cement", "heating efficiency"],
+            efficiency3=1, # costs.at["cement", "CO2 intensity"],
+            capital_cost=20, # costs.at["cement", "efficiency"]
+            # * costs.at["cement", "fixed"],
+            p_nom=5, # existing_cement.loc[nodes, "cement"]
+            # * ratio
+            # / costs.at["cement", "efficiency"],
+            build_year=int(grouping_year),
+            lifetime=20, # costs.at["cement", "lifetime"],
+        )
+
+
+
 # %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -654,6 +720,7 @@ if __name__ == "__main__":
 
     grouping_years_power = snakemake.params.existing_capacities["grouping_years_power"]
     grouping_years_heat = snakemake.params.existing_capacities["grouping_years_heat"]
+    grouping_years_cement = snakemake.params.existing_capacities["grouping_years_cement"]
     add_power_capacities_installed_before_baseyear(
         n, grouping_years_power, costs, baseyear
     )
@@ -675,6 +742,18 @@ if __name__ == "__main__":
                 header=[0, 1],
                 index_col=0,
             ),
+        )
+
+    if options["cement"]:
+
+        add_cement_capacities_installed_before_baseyear(
+            n=n,
+            grouping_years=grouping_years_cement,
+            costs=costs,
+            default_lifetime=snakemake.params.existing_capacities[
+                "default_cement_lifetime"
+            ],
+            baseyear=baseyear,
         )
 
     if options.get("cluster_heat_buses", False):
