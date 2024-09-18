@@ -198,6 +198,7 @@ def prepare_building_stock_data():
             "Iceland": "IS",
             "Montenegro": "ME",
             "Serbia": "RS",
+            "Kosovo": "XK",
             "Albania": "AL",
             "United Kingdom": "GB",
             "Bosnia and Herzegovina": "BA",
@@ -1049,7 +1050,6 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "build_retro_cost",
-            simpl="",
             clusters=48,
             ll="v1.0",
             sector_opts="Co2L0-168H-T-H-B-I-solar3-dist1",
@@ -1073,6 +1073,7 @@ if __name__ == "__main__":
         "AL": ["BG", "RO", "GR"],
         "BA": ["HR"],
         "RS": ["BG", "RO", "HR", "HU"],
+        "KV": ["RS"],
         "MK": ["BG", "GR"],
         "ME": ["BA", "AL", "RS", "HR"],
         "CH": ["SE", "DE"],
